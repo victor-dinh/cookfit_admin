@@ -1,0 +1,4 @@
+html { background: #f7f9f6; }
+body { margin: 0; min-width: 320px; min-height: 100vh; font-family: 'DM Sans', 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+button, input, textarea, select { font-family: inherit; }
+::selection { color: #fff; background: #2f6f51; }

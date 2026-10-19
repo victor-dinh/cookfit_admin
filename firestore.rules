@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isCookFitAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == "support.mgm.studio@gmail.com";
+    }
+
+    match /recipes/{recipeId} {
+      allow get, list: if resource.data.isActive == true || isCookFitAdmin();
+      allow create, update, delete: if isCookFitAdmin();
+    }
+
+    match /content_meta/{documentId} {
+      allow read: if true;
+      allow create, update: if isCookFitAdmin();
+      allow delete: if false;
+    }
+
+    match /content_reports/{reportId} {
+      allow create: if request.resource.data.keys().hasOnly([
+          "recipeId", "recipeName", "contentSnapshot", "reason", "language",
+          "origin", "appVersion", "status", "createdAt"
+        ])
+        && request.resource.data.recipeId is string
+        && request.resource.data.recipeId.size() > 0
+        && request.resource.data.recipeId.size() <= 128
+        && request.resource.data.recipeName is string
+        && request.resource.data.recipeName.size() > 0
+        && request.resource.data.recipeName.size() <= 200
+        && request.resource.data.contentSnapshot is string
+        && request.resource.data.contentSnapshot.size() <= 6000
+        && request.resource.data.reason in [
+          "dangerous_or_incorrect", "allergy_or_food_safety",
+          "inappropriate_or_harmful", "wrong_language", "other"
+        ]
+        && request.resource.data.language in ["vi", "en"]
+        && request.resource.data.origin in ["ai", "catalog"]
+        && request.resource.data.appVersion is string
+        && request.resource.data.appVersion.size() <= 32
+        && request.resource.data.status == "new"
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
+
+    match /support_messages/{messageId} {
+      allow create: if request.resource.data.keys().hasOnly([
+          "message", "language", "appVersion", "status", "createdAt"
+        ])
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 5
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.language in ["vi", "en"]
+        && request.resource.data.appVersion is string
+        && request.resource.data.appVersion.size() > 0
+        && request.resource.data.appVersion.size() <= 32
+        && request.resource.data.status == "new"
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
+  }
+}
